@@ -1,0 +1,17 @@
+{
+    "name": "msuvorov/backend",
+    "authors": [
+        {
+            "name": "Su-pr007",
+            "email": "maksimka.suvorov.01@list.ru"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Custom\\": "classes/custom"
+        }
+    },
+    "require": {
+        "slim/slim": "3.*"
+    }
+}

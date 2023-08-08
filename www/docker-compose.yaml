@@ -1,0 +1,77 @@
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: ./Dockerfile
+    image: frontend_dev
+    container_name: frontend
+    ports:
+      - ${FRONTEND_PORT}:8080
+    volumes:
+      - ./frontend:/home/node/app
+    environment:
+      SERVICE_NAME: app
+      SERVICE_TAGS: dev
+    depends_on:
+      - mysql
+    restart: always
+    command: 'yarn run installDev'
+  
+  backend:
+    build:
+      context: ./backend
+      dockerfile: ./Dockerfile
+    image: backend_dev
+    container_name: backend
+    ports:
+      - '${BACKEND_PORT}:9000'
+    volumes:
+      - ./backend:/app
+    environment:
+      SERVICE_NAME: app
+      SERVICE_TAGS: dev
+    depends_on:
+      - mysql
+    restart: always
+
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: ./Dockerfile
+    image: nginx_dev
+    container_name: nginx
+    ports:
+      - ${HOST_PORT}:80
+    volumes:
+      - ./nginx/configs/:/etc/nginx/conf.d/
+      - ./nginx/logs:/var/log/nginx/
+    environment:
+      VIRTUAL_HOST: ${GLOBAL_DOMAIN}
+      GLOBAL_DOMAIN: ${GLOBAL_DOMAIN}
+      SERVER_PORT: ${SERVER_PORT}
+      MAX_BUF_SIZE: ${MAX_BUF_SIZE}
+      MAX_BODY_SIZE: ${MAX_BODY_SIZE}
+    depends_on:
+      - backend
+    restart: always
+    
+  mysql:
+    image: mysql:5.7-oracle
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - TZ=Europe/Moscow
+    volumes:
+      - ./database/data:/var/lib/mysql
+    restart: always
+
+
+networks:
+  default:
+
+volumes:
+  default: {}

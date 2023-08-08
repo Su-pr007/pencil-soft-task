@@ -1,0 +1,25 @@
+.env
+
+# System files
+.DS_Store
+.thumbs.db
+
+# Editor directories and files
+.idea
+.vscode
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# Backend
+/www/backend/vendor
+
+# Frontend
+node_modules
+
+# Database
+/www/database/data
+
+# Nginx
+/www/nginx/logs
