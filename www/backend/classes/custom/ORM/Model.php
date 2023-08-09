@@ -15,19 +15,19 @@ abstract class Model
     public static function getFullList(): array
     {
         return Mysql::executeQuery(
-            'SELECT * FROM :tableName;',
-            [
-                ':tableName' => static::TABLE_NAME
-            ])->fetchAll(\PDO::FETCH_ASSOC);
+            sprintf('SELECT * FROM %s;', static::TABLE_NAME)
+        )->fetchAll(\PDO::FETCH_ASSOC);
     }
 
     public static function getById(int|string $id): array
     {
         $foundElement = Mysql::executeQuery(
-            'SELECT * FROM :tableName WHERE :idColumn = :idValue LIMIT 1;',
+            sprintf(
+                'SELECT * FROM %s WHERE %s = :idValue LIMIT 1;',
+                static::TABLE_NAME,
+                static::ID_COLUMN_NAME
+            ),
             [
-                ':tableName' => static::TABLE_NAME,
-                ':idColumn' => static::ID_COLUMN_NAME,
                 ':idValue' => $id
             ])->fetch(\PDO::FETCH_ASSOC);
         if (empty($foundElement)) {
@@ -41,13 +41,8 @@ abstract class Model
     {
         try {
             $result = Mysql::executeQuery(
-                'INSERT INTO :tableName (`date`, `sum`, `comment`) VALUES (":dateValue", ":sumValue", ":commentValue");',
-                [
-                    ':tableName' => static::TABLE_NAME,
-                    ':dateValue' => $parameters['date'],
-                    ':sumValue' => $parameters['sum'],
-                    ':commentValue' => $parameters['comment']
-                ]
+                self::createInsertStringForModel(static::TABLE_NAME, array_keys($parameters)),
+                self::createMapperToExecute($parameters)
             );
     
             if (!$result) { // Если добавление не удалось
@@ -61,9 +56,11 @@ abstract class Model
     public static function change(int|string $id, array $parameters): void
     {
         $result = Mysql::executeQuery(
-            'UPDATE :tableName SET `date`=":dateValue", `sum`=":sumValue", `comment`=":commentValue" WHERE `id`=":idValue";',
+            sprintf(
+                'UPDATE %s SET `date`=":dateValue", `sum`=":sumValue", `comment`=":commentValue" WHERE `id`=":idValue";',
+                static::TABLE_NAME
+            ),
             [
-                ':tableName' => static::TABLE_NAME,
                 ':dateValue' => $parameters['date'],
                 ':sumValue' => $parameters['sum'],
                 ':commentValue' => $parameters['comment'],
@@ -79,7 +76,10 @@ abstract class Model
     public static function delete(int|string $id): void
     {
         $result = Mysql::executeQuery(
-            'DELETE FROM :tableName WHERE `id`=":idValue";',
+            sprintf(
+                'DELETE FROM %s WHERE `id`=":idValue";',
+                static::TABLE_NAME
+            ),
             [
                 ':tableName' => static::TABLE_NAME,
                 ':idValue' => $id
@@ -89,5 +89,32 @@ abstract class Model
         if (!$result) { // Если удаление не удалось
             throw new ElementNotFoundException($id);
         }
+    }
+
+    /**
+     * Метод для формирования строки запроса добавления элементов в базу данных
+     */
+    private static function createInsertStringForModel(string $tableName, array $parametersColumns): string
+    {
+        $columns = implode(',', array_map(function ($element) {
+            return "`$element`"; // Оборачиваем название каждого столбца в обратные кавычки
+        }, $parametersColumns));
+
+        $columnValues = implode(',', array_map(function ($element) {
+            return "\":$element\""; // Оборачиваем каждое значение в двойные кавычки
+        }, $parametersColumns));
+
+        return sprintf("INSERT INTO `%s` (%s) VALUES (%s);", $tableName, $columns, $columnValues);
+    }
+    
+    private static function createMapperToExecute(array $parameters): array
+    {
+        $result = [];
+
+        foreach ($parameters as $parameterName => $parameterValue) {
+            $result[":$parameterName"] = $parameterValue;
+        }
+
+        return $result;
     }
 }

@@ -2,6 +2,7 @@
 
 namespace Custom\Database;
 
+use Custom\Exceptions\Mysql\ExecuteQueryException;
 use PDO;
 use PDOStatement;
 
@@ -16,12 +17,16 @@ class Mysql
 		}
 	}
 
-	public static function executeQuery(string $query, array $parameters = []): bool
+	public static function executeQuery(string $query, array $parameters = []): PDOStatement
 	{
 		self::initConnection();
 
 		$state = self::$connectionInstance->prepare($query, [PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY]);
-		return $state->execute($parameters);
+		if (!$state->execute($parameters)) {
+			throw new ExecuteQueryException;
+		}
+
+		return $state;
 	}
 
 	private static function getConnectionString(): string
