@@ -68,7 +68,9 @@ services:
       - TZ=Europe/Moscow
     volumes:
       - ./database/data:/var/lib/mysql
+      - ./database/init.sql:/data/application/init.sql
     restart: always
+    command: --init-file /data/application/init.sql
 
 
 networks:
