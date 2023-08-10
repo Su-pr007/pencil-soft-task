@@ -26,9 +26,8 @@ class ExpenseController
         try { // Пытаемся найти элемент
             $expensesList = ExpenseService::getById($args['id']); // Если нашли
             $responseText = json_encode($expensesList); // Создаём JSON строку с найденным элементом
-        } catch (ElementNotFoundException $error) { // Если не удалось
-            $errorMessage = sprintf('Элемент с ID: %s не найден', $args['id']); // Создаём текст с ошибкой
-            $responseText = self::formErrorResponse($errorMessage); // Создаём JSON ответ об ошибке
+        } catch (ElementNotFoundException) { // Если не удалось
+            $responseText = self::formErrorResponse('Не найдена позиция с заданным id'); // Создаём JSON ответ об ошибке
         }
 
         $response->getBody()->write($responseText); // Записываем ответ
@@ -46,15 +45,11 @@ class ExpenseController
         }
 
         try {
-            ExpenseService::createItem([
-                'comment' => $requestPostData['comment'],
-                'sum' => $requestPostData['sum'],
-                'date' => $requestPostData['date']
-            ]);
+            ExpenseService::createItem($requestPostData);
             $responseText = self::formSuccessResponse("Позиция добавлена");
-        } catch (ExecuteQueryException $error) {
+        } catch (ExecuteQueryException) {
             $responseText = self::formErrorResponse("Возникла ошибка при попытке выполнения запроса. Проверьте передаваемые поля");
-        } catch (InsertElementFailedException $error) {
+        } catch (InsertElementFailedException) {
             $responseText = self::formErrorResponse("Не удалось добавить позицию");
         }
         
@@ -72,17 +67,16 @@ class ExpenseController
             return $response;
         }
 
+
         try {
-            ExpenseService::changeItem($args['id'], [
-                'comment' => $requestPostData->comment,
-                'sum' => $requestPostData->sum,
-                'date' => $requestPostData->date
-            ]);
+            ExpenseService::changeItem($args['id'], (array)$requestPostData);
             $responseText = self::formSuccessResponse("Изменения сохранены");
         } catch (ElementNotFoundException $error) {
             $responseText = self::formErrorResponse("Не найдена позиция с заданным id");
         } catch (InsertElementFailedException $error) {
             $responseText = self::formErrorResponse("Ошибка при изменении позиции");
+        } catch (ExecuteQueryException) {
+            $responseText = self::formErrorResponse("Возникла ошибка при попытке выполнения запроса. Проверьте передаваемые поля");
         }
         
         $response->getBody()->write($responseText);

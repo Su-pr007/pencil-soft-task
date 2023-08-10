@@ -12,7 +12,7 @@ class ExpenseService
         return ExpenseModel::getFullList();
     }
 
-    public static function getById(int|string $id): array
+    public static function getById(string $id): array
     {
         return ExpenseModel::getById($id);
     }
@@ -22,10 +22,10 @@ class ExpenseService
         ExpenseModel::create($parameters);
     }
 
-    public static function changeItem(int|string $id, array $parameters): void
+    public static function changeItem(string $id, array $parameters): void
     {
         if (!self::isElementExists($id)) {
-            throw new ElementNotFoundException('Не найдена позиция с заданным id');
+            throw new ElementNotFoundException;
         }
         ExpenseModel::change($id, $parameters);
     }
@@ -33,12 +33,12 @@ class ExpenseService
     public static function delete(string $id): void
     {
         if (!self::isElementExists($id)) {
-            throw new ElementNotFoundException('Не найдена позиция с заданным id');
+            throw new ElementNotFoundException;
         }
         ExpenseModel::delete($id);
     }
 
-    public static function isElementExists(int|string $id): bool
+    public static function isElementExists(string $id): bool
     {
         try {
             ExpenseModel::getById($id);
