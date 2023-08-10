@@ -55,7 +55,14 @@ module.exports = function (ctx) {
           .use(webpack.DefinePlugin, [{
             __UI_VERSION__: `'${require('../package.json').version}'`
           }])
-      }
+      },
+      extendWebpack(cfg) {
+        cfg.watchOptions = {
+          aggregateTimeout: 500, // delay before reloading
+          poll: 1000, // enable polling since fsevents are not supported in docker
+          ignored: ['**/node_modules', '**/public'] // keep CPU usage minimal
+        };
+      },
     },
 
     devServer: {
