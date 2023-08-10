@@ -4,7 +4,6 @@ namespace Custom\Controllers;
 
 use Custom\Exceptions\Mysql\ElementNotFoundException;
 use Custom\Exceptions\Mysql\ExecuteQueryException;
-use Custom\Exceptions\Mysql\InsertElementFailedException;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 
@@ -27,6 +26,7 @@ class ExpenseController
             $expensesList = ExpenseService::getById($args['id']); // Если нашли
             $responseText = json_encode($expensesList); // Создаём JSON строку с найденным элементом
         } catch (ElementNotFoundException) { // Если не удалось
+            $response->withStatus(404);
             $responseText = self::formErrorResponse('Не найдена позиция с заданным id'); // Создаём JSON ответ об ошибке
         }
 
@@ -46,11 +46,11 @@ class ExpenseController
 
         try {
             ExpenseService::createItem($requestPostData);
+            $response->withStatus(201);
             $responseText = self::formSuccessResponse("Позиция добавлена");
         } catch (ExecuteQueryException) {
+            $response->withStatus(400);
             $responseText = self::formErrorResponse("Возникла ошибка при попытке выполнения запроса. Проверьте передаваемые поля");
-        } catch (InsertElementFailedException) {
-            $responseText = self::formErrorResponse("Не удалось добавить позицию");
         }
         
         $response->getBody()->write($responseText);
@@ -62,6 +62,7 @@ class ExpenseController
     {
         $requestPostData = json_decode($request->getBody()->getContents());
         if (empty($requestPostData)) {
+            $response->withStatus(400);
             $response->getBody()->write(self::formErrorResponse('Не переданы параметры для изменения позиции'));
 
             return $response;
@@ -72,10 +73,10 @@ class ExpenseController
             ExpenseService::changeItem($args['id'], (array)$requestPostData);
             $responseText = self::formSuccessResponse("Изменения сохранены");
         } catch (ElementNotFoundException $error) {
+            $response->withStatus(404);
             $responseText = self::formErrorResponse("Не найдена позиция с заданным id");
-        } catch (InsertElementFailedException $error) {
-            $responseText = self::formErrorResponse("Ошибка при изменении позиции");
         } catch (ExecuteQueryException) {
+            $response->withStatus(400);
             $responseText = self::formErrorResponse("Возникла ошибка при попытке выполнения запроса. Проверьте передаваемые поля");
         }
         
@@ -87,9 +88,10 @@ class ExpenseController
     public function destroy(Request $request, Response $response, $args): Response
     {
         try {
-            $result = ExpenseService::delete($args['id']);
+            ExpenseService::delete($args['id']);
             $responseText = self::formSuccessResponse('Позиция удалена');
         } catch (ElementNotFoundException $error) {
+            $response->withStatus(404);
             $responseText = self::formErrorResponse('Не найдена позиция с заданным id');
         }
 

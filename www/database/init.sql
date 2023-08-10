@@ -7,5 +7,3 @@ CREATE TABLE expense(
     `comment` VARCHAR(255),
     PRIMARY KEY ( id )
 );
-
-INSERT INTO expense (`date`, `sum`, `comment`) VALUES ("2021-09-17", "100", "Капучино");

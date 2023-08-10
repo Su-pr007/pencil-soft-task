@@ -5,7 +5,6 @@ namespace Custom\ORM;
 use \Custom\Database\Mysql;
 use \Custom\Exceptions\Mysql\ElementNotFoundException;
 use Custom\Exceptions\Mysql\ExecuteQueryException;
-use Custom\Exceptions\Mysql\InsertElementFailedException;
 
 abstract class Model
 {
@@ -47,14 +46,10 @@ abstract class Model
     public static function create(array $parameters): void
     {
         try {
-            $result = Mysql::executeQuery(
+            Mysql::executeQuery(
                 sprintf(static::INSERT_STRING, static::TABLE_NAME),
                 $parameters
             );
-    
-            if (!$result) { // Если добавление не удалось
-                throw new InsertElementFailedException(json_encode($parameters));
-            }
         } catch(\PDOException) {
             throw new ExecuteQueryException;
         }
@@ -63,17 +58,13 @@ abstract class Model
     public static function change(string $id, array $parameters): void
     {
         try {
-            $result = Mysql::executeQuery(
+            Mysql::executeQuery(
                 sprintf(static::UPDATE_STRING, static::TABLE_NAME),
                 [
                     ...$parameters,
                     'id' => $id
                 ]
             );
-
-            if (!$result) { // Если изменение не удалось
-                throw new InsertElementFailedException(json_encode($id));
-            }
         } catch(\PDOException) {
             throw new ExecuteQueryException;
         }
@@ -81,7 +72,7 @@ abstract class Model
 
     public static function delete(string $id): void
     {
-        $result = Mysql::executeQuery(
+        Mysql::executeQuery(
             sprintf(
                 static::DELETE_STRING,
                 static::TABLE_NAME
@@ -90,9 +81,5 @@ abstract class Model
                 'id' => $id
             ]
         );
-
-        if (!$result) { // Если удаление не удалось
-            throw new ElementNotFoundException($id);
-        }
     }
 }
