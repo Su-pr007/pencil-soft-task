@@ -22,6 +22,6 @@ export default require.context('../pages', true, /^\.\/.*\.vue$/)
   .filter(page => page !== 'Index' && page !== 'Error404')
   .map(page => ({
     file: page,
-    title: page + '.vue',
+    title: page,
     path: slugify(kebabCase(page))
   }))

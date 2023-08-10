@@ -11,14 +11,20 @@
         />
 
         <q-toolbar-title>
-          quasar-ui-pencil-soft-task v{{ version }}
+          Pencil Soft Task
         </q-toolbar-title>
-
-        <div>Quasar v{{ $q.version }}</div>
       </q-toolbar>
     </q-header>
 
     <q-page-container>
+      <q-tabs align="left">
+        <q-route-tab
+        v-for="page of pages"
+        :key="page"
+        :to="page"
+        :label="page.title"
+        />
+      </q-tabs>
       <router-view />
     </q-page-container>
   </q-layout>
@@ -26,13 +32,15 @@
 
 <script>
 import { version } from 'ui' // "ui" is aliased in quasar.conf.js
+import pages from '../router/pages';
 
 export default {
-  name: 'MyLayout',
+  name: 'Layout',
 
   setup () {
     return {
-      version
+      version,
+      pages
     }
   }
 }

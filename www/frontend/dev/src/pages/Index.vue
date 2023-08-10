@@ -1,40 +1,45 @@
 <template>
-  <q-page padding class="row justify-center">
-    <q-list dense class="list">
-      <div class="text-h4 q-mb-md">Test pages</div>
-      <q-item
-        v-for="page in pages"
-        :key="page.path"
-        :to="page.path"
-      >
-        <q-item-section avatar>
-          <q-icon name="pages" />
-        </q-item-section>
-        <q-item-section>
-          {{ page.title }}
-        </q-item-section>
-        <q-item-section side>
-          <q-icon name="chevron_right" />
-        </q-item-section>
-      </q-item>
-    </q-list>
+  <q-page padding class="column justify-center">
+    <table>
+      <thead>
+        <tr>
+          <th class="text-left">ID</th>
+          <th class="text-left">Comment</th>
+          <th class="text-left">Sum</th>
+          <th class="text-left">Date</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr
+        class="row justify-start q-gutter-md"
+        v-for="expense in expenses"
+        :key="expense">
+          <td>{{ expense.id }}</td>
+          <td>{{ expense.comment }}</td>
+          <td>{{ expense.sum }}</td>
+          <td>{{ expense.date }}</td>
+        </tr>
+      </tbody>
+    </table>
   </q-page>
 </template>
 
 <script>
-import pages from '../router/pages'
+const axios = require('axios')
 
 export default {
-  setup () {
+  data() {
     return {
-      pages
+      expenses: null
     }
+  },
+  mounted() {
+    axios('/api/test/expense').then(response => {
+      this.expenses = response.data;
+    });
   }
 }
 </script>
 
-<style lang="sass" scoped>
-.list
-  width: 700px
-  max-width: 100%
+<style lang="scss" scoped>
 </style>
