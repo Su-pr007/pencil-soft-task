@@ -26,8 +26,8 @@ class ExpenseController
             $expensesList = ExpenseService::getById($args['id']); // Если нашли
             $responseText = json_encode($expensesList); // Создаём JSON строку с найденным элементом
         } catch (ElementNotFoundException) { // Если не удалось
-            $response->withStatus(404);
-            $responseText = self::formErrorResponse('Не найдена позиция с заданным id'); // Создаём JSON ответ об ошибке
+            $response = $response->withStatus(404);
+            $responseText = self::errorResponse('Не найдена позиция с заданным id'); // Создаём JSON ответ об ошибке
         }
 
         $response->getBody()->write($responseText); // Записываем ответ
@@ -35,22 +35,22 @@ class ExpenseController
         return $response;
     }
 
-    public function store(Request $request, Response $response, $args): Response
+    public function store(Request $request, Response $response): Response
     {
         $requestPostData = (array)$request->getParsedBody();
         if (empty($requestPostData)) {
-            $response->getBody()->write(self::formErrorResponse('Не переданы параметры для добавления элемента'));
+            $response->getBody()->write(self::errorResponse('Не переданы параметры для добавления элемента'));
 
-            return $response;
+            return $response->withStatus(400);
         }
 
         try {
             ExpenseService::createItem($requestPostData);
-            $response->withStatus(201);
-            $responseText = self::formSuccessResponse("Позиция добавлена");
+            $response = $response->withStatus(201);
+            $responseText = self::successResponse("Позиция добавлена");
         } catch (ExecuteQueryException) {
-            $response->withStatus(400);
-            $responseText = self::formErrorResponse("Возникла ошибка при попытке выполнения запроса. Проверьте передаваемые поля");
+            $response = $response->withStatus(400);
+            $responseText = self::errorResponse("Возникла ошибка при попытке выполнения запроса. Проверьте передаваемые поля");
         }
         
         $response->getBody()->write($responseText);
@@ -62,22 +62,21 @@ class ExpenseController
     {
         $requestPostData = json_decode($request->getBody()->getContents());
         if (empty($requestPostData)) {
-            $response->withStatus(400);
-            $response->getBody()->write(self::formErrorResponse('Не переданы параметры для изменения позиции'));
+            $response->getBody()->write(self::errorResponse('Не переданы параметры для изменения позиции'));
 
-            return $response;
+            return $response->withStatus(400);
         }
 
 
         try {
             ExpenseService::changeItem($args['id'], (array)$requestPostData);
-            $responseText = self::formSuccessResponse("Изменения сохранены");
+            $responseText = self::successResponse("Изменения сохранены");
         } catch (ElementNotFoundException $error) {
-            $response->withStatus(404);
-            $responseText = self::formErrorResponse("Не найдена позиция с заданным id");
+            $response = $response->withStatus(404);
+            $responseText = self::errorResponse("Не найдена позиция с заданным id");
         } catch (ExecuteQueryException) {
-            $response->withStatus(400);
-            $responseText = self::formErrorResponse("Возникла ошибка при попытке выполнения запроса. Проверьте передаваемые поля");
+            $response = $response->withStatus(400);
+            $responseText = self::errorResponse("Возникла ошибка при попытке выполнения запроса. Проверьте передаваемые поля");
         }
         
         $response->getBody()->write($responseText);
@@ -89,10 +88,10 @@ class ExpenseController
     {
         try {
             ExpenseService::delete($args['id']);
-            $responseText = self::formSuccessResponse('Позиция удалена');
+            $responseText = self::successResponse('Позиция удалена');
         } catch (ElementNotFoundException $error) {
-            $response->withStatus(404);
-            $responseText = self::formErrorResponse('Не найдена позиция с заданным id');
+            $response = $response->withStatus(404);
+            $responseText = self::errorResponse('Не найдена позиция с заданным id');
         }
 
         $response->getBody()->write($responseText);
@@ -100,7 +99,7 @@ class ExpenseController
         return $response;
     }
 
-    private function formSuccessResponse(string $text): string
+    private function successResponse(string $text): string
     {
         return json_encode([
             'success' => true,
@@ -111,7 +110,7 @@ class ExpenseController
         ]);
     }
 
-    private function formErrorResponse(string $text): string
+    private function errorResponse(string $text): string
     {
         return json_encode([
             'success' => false,
