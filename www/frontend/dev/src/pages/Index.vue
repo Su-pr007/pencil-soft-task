@@ -1,35 +1,38 @@
 <template>
   <q-page padding>
     <h1>Расходы</h1>
-    <table class="expenses-list" cellspacing="10">
-      <thead>
-        <tr class="expenses-list__head">
-          <th class="expenses-list__head-item">ID</th>
-          <th class="expenses-list__head-item">Comment</th>
-          <th class="expenses-list__head-item">Sum</th>
-          <th class="expenses-list__head-item">Date</th>
-          <th class="expenses-list__head-item"></th>
-          <th class="expenses-list__head-item"></th>
-        </tr>
-      </thead>
-      <tbody class="expenses-list__tbody">
+    <div class="expenses-list">
+      <div>
+        <div class="expenses-list__head">
+          <div class="expenses-list__head-item">ID</div>
+          <div class="expenses-list__head-item">Comment</div>
+          <div class="expenses-list__head-item">Sum</div>
+          <div class="expenses-list__head-item">Date</div>
+          <div class="expenses-list__head-item"></div>
+          <div class="expenses-list__head-item"></div>
+        </div>
+      </div>
+      <div class="expenses-list__tbody">
         <ExpenseRow
         v-for="expense in expenses"
         :key="expense"
         :expense="expense"
-        @deletedRow="removeExpense($event)"></ExpenseRow>
-        <tr
+        @changesRow="changeExpense($event)"
+        @deletedRow="removeExpense($event)"
+        @saveRow="saveRow($event)"
+        @cancelChangeRow="cancelChangeRow($event)"></ExpenseRow>
+        <div
           v-if="isAddingExpense"
           class="expenses-list__row expenses-list-item expenses-list-item__create"
         >
-          <td></td>
-          <td><input type="text" name="newExpenseComment" v-model="newExpenseComment" /></td>
-          <td><input type="number" name="newExpenseSum" v-model="newExpenseSum" /></td>
-          <td><input type="date" name="newExpenseDate" v-model="newExpenseDate" /></td>
-          <td><input @click="saveExpenseRow()" type="button" value="Сохранить" /></td>
-        </tr>
-      </tbody>
-    </table>
+          <div></div>
+          <div><input type="text" name="newExpenseComment" v-model="newExpense.comment" /></div>
+          <div><input type="number" name="newExpenseSum" v-model="newExpense.sum" /></div>
+          <div><input type="date" name="newExpenseDate" v-model="newExpense.date" /></div>
+          <div><input @click="saveNewRow(newExpense)" type="button" value="Сохранить" /></div>
+        </div>
+      </div>
+    </div>
     <input
       v-if="!isAddingExpense"
       @click="addExpenseRow"
@@ -40,6 +43,7 @@
 <script>
 import axios from 'axios';
 import ExpenseRow from '../components/ExpenseRow.vue';
+import { Notify } from 'quasar';
 
 export default {
   components: {
@@ -49,9 +53,11 @@ export default {
     return {
       expenses: null,
       isAddingExpense: false,
-      newExpenseComment: '',
-      newExpenseSum: '',
-      newExpenseDate: '',
+      newExpense: {
+        comment: '',
+        sum: '',
+        date: ''
+      }
     }
   },
   created() {
@@ -60,43 +66,143 @@ export default {
   methods: {
     fillTable() {
       axios('/api/test/expense').then(response => {
-        this.expenses = response.data;
+        this.expenses = response.data.map(expense => {
+          expense.isChanges = false; // Добавляем свойство isChanges для каждого расхода
+
+          return expense;
+        });
+      })
+      .then(error => {
+        const notification = error.response.data.notification;
+
+        Notify.create({
+          type: notification.type === 'success' ? 'positive' : 'negative',
+          message: notification.title
+        });
       });
     },
     addExpenseRow() {
       this.isAddingExpense = true;
     },
-    saveExpenseRow() {
+    saveRow(expenseForm) {
+      axios.patch(`/api/test/expense/${expenseForm.id.value}`, this.getExpenseRowJson(expenseForm))
+        .then(response => {
+          this.updateExpense(expenseForm);
+          const notification = response.data.notification;
+
+          Notify.create({
+            type: notification.type === 'success' ? 'positive' : 'negative',
+            message: notification.title
+          });
+        })
+        .catch(error => {
+          const notification = error.response.data.notification;
+
+          Notify.create({
+            type: notification.type === 'success' ? 'positive' : 'negative',
+            message: notification.title
+          });
+        });
+    },
+    saveNewRow(expense) {
       this.isAddingExpense = false;
 
-      axios.post('/api/test/expense', this.getExpenseRowData(), {
-      header : {
-       'Content-Type' : 'multipart/form-data'
-     }
-    })
+      axios.post('/api/test/expense', this.getExpenseRowData(expense), {
+        header : {
+        'Content-Type' : 'multipart/form-data'
+      }
+      })
         .then(response => {
           this.fillTable();
+          const notification = response.data.notification;
+
+          Notify.create({
+            type: notification.type === 'success' ? 'positive' : 'negative',
+            message: notification.title
+          });
         })
-        .catch(response => {
-          
+        .catch(error => {
+            const notification = error.response.data.notification;
+
+            Notify.create({
+              type: notification.type === 'success' ? 'positive' : 'negative',
+              message: notification.title
+            });
+        });
+    },
+    updateExpense(expense) {
+      axios.get(`/api/test/expense/${expense.id.value}`)
+        .then((response) => {
+          const index = this.findExpenseIndexById(expense.id.value);
+
+          this.expenses[index] = response.data;
+          this.expenses[index].isChanges = false;
+          const notification = response.data.notification;
+
+          Notify.create({
+            type: 'positive',
+            message: notification.title
+          })
+        })
+        .then(error => {
+          const notification = error.response.data.notification;
+
+          Notify.create({
+            type: notification.type === 'success' ? 'positive' : 'negative',
+            message: notification.title
+          });
         });
     },
     removeExpense(expense) {
-        // Убрать блок визуально
-        this.$parent.$data.expenses.splice(this.$parent.$data.expenses.indexOf(expense), 1);
-        axios.delete(`/api/test/expense/${expense.id}`)
-            .then(() => {
-            // Перезагрузка всей таблицы
-            this.$parent.fillTable();
-            });
+      if (!confirm('Вы уверены что хотите удалить эту строку?')) { // Подтверждение
+        return;
+      }
+
+      // Убрать блок визуально
+      this.expenses.splice(this.expenses.indexOf(expense), 1);
+      axios.delete(`/api/test/expense/${expense.id}`)
+        .then(response => {
+          const notification = response.data.notification;
+
+          Notify.create({
+            type: 'positive',
+            message: notification.title
+          });
+        })
+        .catch(error => {
+          const notification = error.response.data.notification;
+
+          Notify.create({
+            type: notification.type === 'success' ? 'positive' : 'negative',
+            message: notification.title
+          });
+        })
+        
     },
-    getExpenseRowData() {
+    changeExpense(expense) {
+      expense.isChanges = true;
+    },
+    cancelChangeRow(expense) {
+      expense.isChanges = false;
+    },
+    getExpenseRowJson(expense) {
+      return JSON.stringify({
+        'id': expense.id.value,
+        'sum': expense.sum.value,
+        'comment': expense.comment.value,
+        'date': expense.date.value
+      });
+    },
+    getExpenseRowData(expense) {
       const formData = new FormData();
-      formData.set('sum', this.newExpenseSum);
-      formData.set('comment', this.newExpenseComment);
-      formData.set('date', this.newExpenseDate);
+      formData.set('sum', expense.sum);
+      formData.set('comment', expense.comment);
+      formData.set('date', expense.date);
 
       return formData;
+    },
+    findExpenseIndexById(expenseId) {
+      return this.expenses.findIndex(expense => +expense.id === +expenseId)
     }
   }
 }

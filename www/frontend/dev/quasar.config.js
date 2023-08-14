@@ -9,7 +9,8 @@ module.exports = function (ctx) {
     // app boot file (/src/boot)
     // --> boot files are part of "main.js"
     boot: [
-      'register.js'
+      'register.js',
+      'notify-defaults'
     ],
 
     css: [
@@ -36,7 +37,9 @@ module.exports = function (ctx) {
       config: {},
 
       // Quasar plugins
-      plugins: []
+      plugins: [
+        'Notify'
+      ]
     },
 
     // animations: 'all', // --- includes all animations
