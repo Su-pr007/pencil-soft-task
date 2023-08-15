@@ -58,8 +58,10 @@ services:
     restart: always
     
   mysql:
-    image: mysql:5.7-oracle
-    container_name: mysql
+    build:
+      context: ./database
+      dockerfile: Dockerfile
+    container_name: mysql_dev
     environment:
       - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
       - MYSQL_DATABASE=${MYSQL_DATABASE}
@@ -71,7 +73,6 @@ services:
       - ./database/init.sql:/data/application/init.sql
     restart: always
     command: --init-file /data/application/init.sql
-
 
 networks:
   default:

@@ -13,60 +13,14 @@
         </div>
       </div>
       <div class="expenses-list__body">
-        <div
+        <ExpenseRow
         v-for="expense in expenses"
-        :key="expense">
-          <div
-            v-if="!expense.isChanges"
-            class="expenses-list__row expenses-list-item"
-          >
-              <div class="expenses-list-item__id">{{ expense.id }}</div>
-              <div class="expenses-list-item__comment">{{ expense.comment }}</div>
-              <div class="expenses-list-item__sum">{{ expense.sum }}</div>
-              <div class="expenses-list-item__date">{{ expense.date }}</div>
-              <div class="expenses-list-item__change"><q-btn @click="changeExpense(expense)" type="button" label="Изменить" /></div>
-              <div class="expenses-list-item__delete"><q-btn @click="removeExpense(expense)" type="button" label="Удалить" /></div>
-          </div>
-          <q-form
-            v-else
-            class="expenses-list__row expenses-list-item" action="#" method="POST"
-            @submit="expenseFormHandler"
-            @reset="expenseFormReset"
-          >
-              <div class="expenses-list-item__id">
-                <input filled type="hidden" name="id" :value="expense.id" />{{ expense.id }}
-              </div>
-              <div class="expenses-list-item__comment">
-                <q-input filled type="text" name="comment" label="Comment"
-                  required
-                  :value="expense.comment"
-                  lazy-rules
-                  rules="[val => val && val.length > 0 || 'Введите комментарий']"
-                />
-              </div>
-              <div class="expenses-list-item__sum">
-                <q-input filled type="number" name="sum" label="Sum"
-                  required
-                  :value="expense.sum"
-                  lazy-rules
-                  rules="[val => val && val.length > 0 || 'Введите сумму']"
-                />
-              </div>
-              <div class="expenses-list-item__date">
-                <q-input filled type="date" name="date" label="Date"
-                  required
-                  :value="expense.date"
-                  lazy-rules
-                  rules="[val => val || 'Выберите дату']" />
-              </div>
-              <div class="expenses-list-item__save">
-                <q-btn @click="saveRow($event)" type="submit" label="Сохранить"/>
-              </div>
-              <div class="expenses-list-item__cancel">
-                <q-btn @click="cancelChangeRow(expense)" type="reset" label="Отменить"/>
-              </div>
-          </q-form>
-        </div>
+        :key="expense"
+        :expense="expense"
+        @changeRow="changeRow($event)"
+        @deleteRow="removeRow($event)"
+        @saveRow="saveRow($event)"
+        @cancelChangeRow="cancelChangeRow($event)"></ExpenseRow>
 
       </div>
       <AddExpenseRow v-if="isAddingExpense" :newExpense="newExpense" @saveRow="saveNewRow($event)"></AddExpenseRow>
@@ -80,12 +34,14 @@
 
 <script>
 import axios from 'axios';
-import AddExpenseRow from '../components/AddExpenseRow.vue';
 import { Notify } from 'quasar';
+import AddExpenseRow from '../components/AddExpenseRow.vue';
+import ExpenseRow from '../components/ExpenseRow.vue';
 
 export default {
   components: {
-    AddExpenseRow
+    AddExpenseRow,
+    ExpenseRow
   },
   data() {
     return {
@@ -112,38 +68,11 @@ export default {
         });
       })
       .catch(error => {
-        const notification = error.response.data.notification;
-
-        Notify.create({
-          type: notification.type === 'success' ? 'positive' : 'negative',
-          message: notification.title
-        });
-      });
+        this.showNotification(error.response.data.notification);
+      })
     },
     addExpenseRow() {
       this.isAddingExpense = true;
-    },
-    saveRow(event) {
-      const expenseForm = event.target.form;
-
-      axios.patch(`/api/test/expense/${expenseForm.id.value}`, this.getExpenseRowJson(expenseForm))
-        .then(response => {
-          this.updateExpense(expenseForm);
-          const notification = response.data.notification;
-
-          Notify.create({
-            type: notification.type === 'success' ? 'positive' : 'negative',
-            message: notification.title
-          });
-        })
-        .catch(error => {
-          const notification = error.response.data.notification;
-
-          Notify.create({
-            type: notification.type === 'success' ? 'positive' : 'negative',
-            message: notification.title
-          });
-        });
     },
     saveNewRow(expense) {
       this.isAddingExpense = false;
@@ -153,48 +82,15 @@ export default {
         'Content-Type' : 'multipart/form-data'
       }
       })
-        .then(response => {
-          this.fillTable();
-          const notification = response.data.notification;
-
-          Notify.create({
-            type: notification.type === 'success' ? 'positive' : 'negative',
-            message: notification.title
-          });
-        })
-        .catch(error => {
-            const notification = error.response.data.notification;
-
-            Notify.create({
-              type: notification.type === 'success' ? 'positive' : 'negative',
-              message: notification.title
-            });
-        });
+      .then(response => {
+        this.fillTable();
+        this.showNotification(response.data.notification);
+      })
+      .catch(error => {
+        this.showNotification(error.response.data.notification);
+      })
     },
-    updateExpense(expense) {
-      axios.get(`/api/test/expense/${expense.id.value}`)
-        .then((response) => {
-          const index = this.findExpenseIndexById(expense.id.value);
-
-          this.expenses[index] = response.data;
-          this.expenses[index].isChanges = false;
-          const notification = response.data.notification;
-
-          Notify.create({
-            type: 'positive',
-            message: notification.title
-          })
-        })
-        .catch(error => {
-          const notification = error.response.data.notification;
-
-          Notify.create({
-            type: notification.type === 'success' ? 'positive' : 'negative',
-            message: notification.title
-          });
-        });
-    },
-    removeExpense(expense) {
+    removeRow(expense) {
       // Подтверждение удален. Можно сделать кастомизированным вариантом, но для простоты оставим так
       if (!confirm('Вы уверены что хотите удалить эту строку?')) {
         return;
@@ -204,36 +100,11 @@ export default {
       this.expenses.splice(this.expenses.indexOf(expense), 1);
       axios.delete(`/api/test/expense/${expense.id}`)
         .then(response => {
-          const notification = response.data.notification;
-
-          Notify.create({
-            type: 'positive',
-            message: notification.title
-          });
+          this.showNotification(response.data.notification);
         })
         .catch(error => {
-          const notification = error.response.data.notification;
-
-          Notify.create({
-            type: notification.type === 'success' ? 'positive' : 'negative',
-            message: notification.title
-          });
+          this.showNotification(error.response.data.notification);
         })
-        
-    },
-    changeExpense(expense) {
-      expense.isChanges = true;
-    },
-    cancelChangeRow(expense) {
-      expense.isChanges = false;
-    },
-    getExpenseRowJson(expense) {
-      return JSON.stringify({
-        'id': expense.id.value,
-        'sum': expense.sum.value,
-        'comment': expense.comment.value,
-        'date': expense.date.value
-      });
     },
     getExpenseRowData(expense) {
       const formData = new FormData();
@@ -243,8 +114,11 @@ export default {
 
       return formData;
     },
-    findExpenseIndexById(expenseId) {
-      return this.expenses.findIndex(expense => +expense.id === +expenseId)
+    showNotification(notification) {
+      Notify.create({
+        type: notification.type === 'success' ? 'positive' : 'negative',
+        message: notification.title
+      });
     }
   }
 }
@@ -262,21 +136,12 @@ export default {
     &-item
       text-align: start
 
-  &__row
-      display: grid
-      grid-template-columns: repeat(6, 1fr)
-      width: 50%
-      min-width: 750px
-      margin-block: 1em
-      padding-bottom: 1em
-      gap: 1em
-      border-bottom: 1px solid var(--q-primary, #07e)
-
   &__create-button
     border: 1px solid var(--q-primary)
     font-size: 2em
     width: 2em
     height: 2em
+    margin-block: 1em
     color: var(--q-primary)
     background-color: #fff
 

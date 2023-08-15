@@ -3,7 +3,7 @@
 namespace Custom\Services;
 
 use Custom\Exceptions\Mysql\ElementNotFoundException;
-use Custom\ORM\ExpenseModel;
+use Custom\Models\ExpenseModel;
 
 class ExpenseService
 {

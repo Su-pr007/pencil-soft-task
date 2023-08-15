@@ -1,6 +1,6 @@
 <?php
 
-namespace Custom\ORM;
+namespace Custom\Models;
 
 use \Custom\Database\Mysql;
 use \Custom\Exceptions\Mysql\ElementNotFoundException;

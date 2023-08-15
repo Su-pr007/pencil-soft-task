@@ -1,6 +1,6 @@
 <?php
 
-namespace Custom\ORM;
+namespace Custom\Models;
 
 class ExpenseModel extends Model
 {
