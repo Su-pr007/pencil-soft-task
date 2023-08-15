@@ -8,30 +8,68 @@
           <div class="expenses-list__head-item">Comment</div>
           <div class="expenses-list__head-item">Sum</div>
           <div class="expenses-list__head-item">Date</div>
-          <div class="expenses-list__head-item"></div>
-          <div class="expenses-list__head-item"></div>
+          <div class="expenses-list__head-item">Action 1</div>
+          <div class="expenses-list__head-item">Action 2</div>
         </div>
       </div>
-      <div class="expenses-list__tbody">
-        <ExpenseRow
-        v-for="expense in expenses"
-        :key="expense"
-        :expense="expense"
-        @changesRow="changeExpense($event)"
-        @deletedRow="removeExpense($event)"
-        @saveRow="saveRow($event)"
-        @cancelChangeRow="cancelChangeRow($event)"></ExpenseRow>
+      <div class="expenses-list__body">
         <div
-          v-if="isAddingExpense"
-          class="expenses-list__row expenses-list-item expenses-list-item__create"
-        >
-          <div></div>
-          <div><input type="text" name="newExpenseComment" v-model="newExpense.comment" /></div>
-          <div><input type="number" name="newExpenseSum" v-model="newExpense.sum" /></div>
-          <div><input type="date" name="newExpenseDate" v-model="newExpense.date" /></div>
-          <div><input @click="saveNewRow(newExpense)" type="button" value="Сохранить" /></div>
+        v-for="expense in expenses"
+        :key="expense">
+          <div
+            v-if="!expense.isChanges"
+            class="expenses-list__row expenses-list-item"
+          >
+              <div class="expenses-list-item__id">{{ expense.id }}</div>
+              <div class="expenses-list-item__comment">{{ expense.comment }}</div>
+              <div class="expenses-list-item__sum">{{ expense.sum }}</div>
+              <div class="expenses-list-item__date">{{ expense.date }}</div>
+              <div class="expenses-list-item__change"><q-btn @click="changeExpense(expense)" type="button" label="Изменить" /></div>
+              <div class="expenses-list-item__delete"><q-btn @click="removeExpense(expense)" type="button" label="Удалить" /></div>
+          </div>
+          <q-form
+            v-else
+            class="expenses-list__row expenses-list-item" action="#" method="POST"
+            @submit="expenseFormHandler"
+            @reset="expenseFormReset"
+          >
+              <div class="expenses-list-item__id">
+                <input filled type="hidden" name="id" :value="expense.id" />{{ expense.id }}
+              </div>
+              <div class="expenses-list-item__comment">
+                <q-input filled type="text" name="comment" label="Comment"
+                  required
+                  :value="expense.comment"
+                  lazy-rules
+                  rules="[val => val && val.length > 0 || 'Введите комментарий']"
+                />
+              </div>
+              <div class="expenses-list-item__sum">
+                <q-input filled type="number" name="sum" label="Sum"
+                  required
+                  :value="expense.sum"
+                  lazy-rules
+                  rules="[val => val && val.length > 0 || 'Введите сумму']"
+                />
+              </div>
+              <div class="expenses-list-item__date">
+                <q-input filled type="date" name="date" label="Date"
+                  required
+                  :value="expense.date"
+                  lazy-rules
+                  rules="[val => val || 'Выберите дату']" />
+              </div>
+              <div class="expenses-list-item__save">
+                <q-btn @click="saveRow($event)" type="submit" label="Сохранить"/>
+              </div>
+              <div class="expenses-list-item__cancel">
+                <q-btn @click="cancelChangeRow(expense)" type="reset" label="Отменить"/>
+              </div>
+          </q-form>
         </div>
+
       </div>
+      <AddExpenseRow v-if="isAddingExpense" :newExpense="newExpense" @saveRow="saveNewRow($event)"></AddExpenseRow>
     </div>
     <input
       v-if="!isAddingExpense"
@@ -42,12 +80,12 @@
 
 <script>
 import axios from 'axios';
-import ExpenseRow from '../components/ExpenseRow.vue';
+import AddExpenseRow from '../components/AddExpenseRow.vue';
 import { Notify } from 'quasar';
 
 export default {
   components: {
-    ExpenseRow
+    AddExpenseRow
   },
   data() {
     return {
@@ -65,14 +103,15 @@ export default {
   },
   methods: {
     fillTable() {
-      axios('/api/test/expense').then(response => {
+      axios('/api/test/expense')
+      .then(response => {
         this.expenses = response.data.map(expense => {
           expense.isChanges = false; // Добавляем свойство isChanges для каждого расхода
 
           return expense;
         });
       })
-      .then(error => {
+      .catch(error => {
         const notification = error.response.data.notification;
 
         Notify.create({
@@ -84,7 +123,9 @@ export default {
     addExpenseRow() {
       this.isAddingExpense = true;
     },
-    saveRow(expenseForm) {
+    saveRow(event) {
+      const expenseForm = event.target.form;
+
       axios.patch(`/api/test/expense/${expenseForm.id.value}`, this.getExpenseRowJson(expenseForm))
         .then(response => {
           this.updateExpense(expenseForm);
@@ -144,7 +185,7 @@ export default {
             message: notification.title
           })
         })
-        .then(error => {
+        .catch(error => {
           const notification = error.response.data.notification;
 
           Notify.create({
@@ -154,7 +195,8 @@ export default {
         });
     },
     removeExpense(expense) {
-      if (!confirm('Вы уверены что хотите удалить эту строку?')) { // Подтверждение
+      // Подтверждение удален. Можно сделать кастомизированным вариантом, но для простоты оставим так
+      if (!confirm('Вы уверены что хотите удалить эту строку?')) {
         return;
       }
 
@@ -210,10 +252,25 @@ export default {
 
 <style lang="sass" scoped>
 .expenses-list
-
   &__head
+    display: grid
+    grid-template-columns: repeat(6, 1fr)
+    width: 50%
+    min-width: 750px
+    border-bottom: 2px solid var(--q-primary, #07e)
+
     &-item
       text-align: start
+
+  &__row
+      display: grid
+      grid-template-columns: repeat(6, 1fr)
+      width: 50%
+      min-width: 750px
+      margin-block: 1em
+      padding-bottom: 1em
+      gap: 1em
+      border-bottom: 1px solid var(--q-primary, #07e)
 
   &__create-button
     border: 1px solid var(--q-primary)
