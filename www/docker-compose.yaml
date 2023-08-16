@@ -56,11 +56,12 @@ services:
     depends_on:
       - backend
     restart: always
-    
+
   mysql:
-    build:
-      context: ./database
-      dockerfile: Dockerfile
+    # build:
+    #   context: ./nginx
+    #   dockerfile: ./Dockerfile
+    image: mysql:5.7-oracle
     container_name: mysql_dev
     environment:
       - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
