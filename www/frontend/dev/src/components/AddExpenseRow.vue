@@ -25,6 +25,7 @@
   				:rules="[val => val && val.length > 0 || 'Укажите дату']" />
       </div>
       <div class="expenses-list-item__save">
+        <q-btn @click="this.$emit('cancelSaveRow')" type="button" label="Отменить" />
         <q-btn @click="this.$emit('saveRow', $props.newExpense)" type="button" label="Сохранить" />
       </div>
     </div>

@@ -113,7 +113,7 @@ export default {
 		}
 	}
 }
-</script>\
+</script>
 
 <style lang="sass" scoped>
 .expenses-list
