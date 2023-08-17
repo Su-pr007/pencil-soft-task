@@ -1,16 +1,18 @@
 <template>
   <q-page padding>
     <h1>Расходы</h1>
-    <ExpensesList></ExpensesList>
+    <div class="expenses-container">
+      <ExpensesList></ExpensesList>
+    </div>
   </q-page>
 </template>
 
-<script>
+<script setup>
 import ExpensesList from '../components/ExpensesList.vue';
-
-export default {
-  components: [
-    ExpensesList
-  ]
-}
 </script>
+
+<style lang="sass" scoped>
+.expenses-container
+  min-width: 750px
+  width: 50%
+</style>

@@ -18,15 +18,17 @@
           :expense="expense"
           @changeRow="changeRow($event)"
           @deleteRow="removeRow($event)"
-          @saveRow="saveRow($event)"
-          @cancelChangeRow="cancelChangeRow"></ExpenseRow>
+          @saveRow="saveRow($event)"></ExpenseRow>
   
         </div>
-        <AddExpenseRow
-            v-if="isAddingExpense"
-            :newExpense="newExpense"
-            @saveRow="saveNewRow($event)"
-            @cancelSaveRow="cancelSaveRow()"></AddExpenseRow>
+        <q-dialog v-model="isAddingExpense">
+          <div class="dialog-container">
+            <AddExpenseRow
+                :newExpense="newExpense"
+                @saveRow="saveNewRow($event)"
+                @cancelSaveRow="cancelSaveRow()"></AddExpenseRow>
+          </div>
+        </q-dialog>
       </div>
       <input
         v-if="!isAddingExpense"
@@ -135,8 +137,6 @@
     &__head
       display: grid
       grid-template-columns: repeat(6, 1fr)
-      width: 50%
-      min-width: 750px
       border-bottom: 2px solid var(--q-primary, #07e)
   
       &-item
@@ -155,5 +155,8 @@
         color: #fff
         background-color: var(--q-primary)
   
+  .dialog-container
+    background-color: #fff
+    padding: 2em
   </style>
   

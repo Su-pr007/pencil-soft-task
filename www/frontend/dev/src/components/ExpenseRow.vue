@@ -46,7 +46,7 @@
 				required
 				v-model="$props.expense.date"
 				lazy-rules
-				:rules="[val => val || 'Выберите дату']" />
+				:rules="[val => val && val.length > 0 || 'Укажите дату']" />
 			</div>
 			<div class="expenses-list-item__save">
 				<q-btn type="submit" label="Сохранить"/>
@@ -120,8 +120,6 @@ export default {
   &__row
       display: grid
       grid-template-columns: repeat(6, 1fr)
-      width: 50%
-      min-width: 750px
       margin-block: 1em
       padding-bottom: 1em
       gap: 1em

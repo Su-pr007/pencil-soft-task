@@ -1,41 +1,59 @@
 <template>
-    <div class="expenses-list__row expenses-list-item expenses-list-item__create">
-      <div class="expenses-list-item__comment">
+    <q-form class="expenses-form" @submit.prevent="this.$emit('saveRow', $props.newExpense)">
+      <div class="expenses-form__comment">
         <q-input type="text" name="newExpenseComment"
           required
           v-model="$props.newExpense.comment"
   				lazy-rules
+          label="Комментарий"
   				:rules="[val => val && val.length > 0 || 'Введите комментарий']" />
       </div>
-      <div class="expenses-list-item__sum">
+      <div class="expenses-form__sum">
         <q-input type="number" name="newExpenseSum" min="1"
   				required
           v-model="$props.newExpense.sum"
   				lazy-rules
+          label="Сумма"
   				:rules="[
             val => val !== '' || 'Введите сумму',
             val => val > 0 || 'Сумма должна быть больше нуля'
           ]" />
       </div>
-      <div class="expenses-list-item__date">
+      <div class="expenses-form__date">
         <q-input type="date" name="newExpenseDate"
   				required
           v-model="$props.newExpense.date"
   				lazy-rules
+          label="Дата"
   				:rules="[val => val && val.length > 0 || 'Укажите дату']" />
       </div>
-      <div class="expenses-list-item__save">
+      <div class="expenses-form__actions">
         <q-btn @click="this.$emit('cancelSaveRow')" type="button" label="Отменить" />
-        <q-btn @click="this.$emit('saveRow', $props.newExpense)" type="button" label="Сохранить" />
+        <q-btn type="submit" label="Сохранить" />
       </div>
-    </div>
+    </q-form>
 </template>
 
 <script>
 export default {
     emits: [
-        'saveRow'
+        'saveRow',
+        'cancelSaveRow'
     ],
     props: ['newExpense']
 }
 </script>
+
+<style lang="sass" scoped>
+.expenses-form
+  &__date
+    max-width: 10em
+
+    @supports (max-width: max-content)
+      max-width: max-content
+    
+  &__actions
+    display: flex
+    flex-flow: row wrap
+    gap: 1em
+</style>
