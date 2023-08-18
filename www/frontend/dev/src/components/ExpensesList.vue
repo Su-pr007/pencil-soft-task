@@ -39,7 +39,7 @@
   
   <script>
   import axios from 'axios';
-  import { Notify } from 'quasar';
+  import { Notify, Dialog } from 'quasar';
   import AddExpenseRow from './AddExpenseRow.vue';
   import ExpenseRow from './ExpenseRow.vue';
   
@@ -99,20 +99,23 @@
         })
       },
       removeRow(expense) {
-        // Подтверждение удален. Можно сделать кастомизированным вариантом, но для простоты оставим так
-        if (!confirm('Вы уверены что хотите удалить эту строку?')) {
-          return;
-        }
-  
-        // Убрать блок визуально
-        this.expenses.splice(this.expenses.indexOf(expense), 1);
-        axios.delete(`/api/test/expense/${expense.id}`)
-          .then(response => {
-            this.showNotification(response.data.notification);
-          })
-          .catch(error => {
-            this.showNotification(error.response.data.notification);
-          })
+        Dialog.create({
+          title: 'Подтверждение',
+          message: 'Вы уверены, что хотите удалить эту строку?',
+          cancel: true,
+          persistent: true
+        })
+        .onOk(() => {
+          // Убрать блок визуально
+          this.expenses.splice(this.expenses.indexOf(expense), 1);
+          axios.delete(`/api/test/expense/${expense.id}`)
+            .then(response => {
+              this.showNotification(response.data.notification);
+            })
+            .catch(error => {
+              this.showNotification(error.response.data.notification);
+            })
+        });
       },
       getExpenseRowData(expense) {
         const formData = new FormData();

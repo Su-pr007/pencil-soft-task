@@ -12,7 +12,7 @@
 				<q-btn @click="changeRow($props.expense)" type="button" label="Изменить" />
 			</div>
 			<div class="expenses-list-item__delete">
-				<q-btn @click="this.$emit('deleteRow', $props.expense)" type="button" label="Удалить" />
+				<q-btn @click.prevent="this.$emit('deleteRow', $props.expense)" type="button" label="Удалить" />
 			</div>
 		</div>
 		<q-form
@@ -20,7 +20,6 @@
 		class="expenses-list__row expenses-list-item" action="#" method="POST"
 		ref="expenseForm"
 		@submit.prevent="expenseFormHandler"
-		@reset="expenseFormReset"
 		>
 			<div class="expenses-list-item__id">
 				<input filled type="hidden" name="id" :value="$props.expense.id" />{{ $props.expense.id }}
@@ -63,6 +62,9 @@ import axios from 'axios';
 import { Notify } from 'quasar';
 
 export default {
+	emits: [
+		'deleteRow'
+	],
 	props: [
 		'expense'
 	],
@@ -76,6 +78,7 @@ export default {
 					this.showNotification(response.data.notification);
 				})
 				.catch(error => {
+					if (!error.response.data.notification) return;
 					this.showNotification(error.response.data.notification)
 				});
 		},
@@ -88,12 +91,13 @@ export default {
 		updateRow(expense) {
 			axios.get(`/api/test/expense/${expense.id.value}`)
 				.then((response) => {
-					this.$props.expense = response.data;
-					this.$props.expense.isChanges = false;
+					this.expense.isChanges = false;
 
+					if (!response.data.notification) return;
 					this.showNotification(response.data.notification);
 				})
 				.catch(error => {
+					if (!error.response?.data?.notification) return;
 					this.showNotification(error.response.data.notification);
 				});
 		},
