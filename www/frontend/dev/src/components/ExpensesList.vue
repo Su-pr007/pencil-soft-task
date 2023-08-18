@@ -1,6 +1,6 @@
 <template>
     <div>
-      <div class="expenses-list">
+      <div v-if="expenses.length > 0" class="expenses-list">
         <div>
           <div class="expenses-list__head">
             <div class="expenses-list__head-item">ID</div>
@@ -21,19 +21,19 @@
           @saveRow="saveRow($event)"></ExpenseRow>
   
         </div>
-        <q-dialog v-model="isAddingExpense">
-          <div class="dialog-container">
-            <AddExpenseRow
-                :newExpense="newExpense"
-                @saveRow="saveNewRow($event)"
-                @cancelSaveRow="cancelSaveRow()"></AddExpenseRow>
-          </div>
-        </q-dialog>
       </div>
-      <input
+      <q-btn
         v-if="!isAddingExpense"
         @click="addExpenseRow"
-        class="expenses-list__create-button" type="button" value="+" title="Добавить запись" />
+        class="expenses-list__create-button" type="button" label="+" title="Добавить запись" />
+      <q-dialog v-model="isAddingExpense">
+        <div class="dialog-container">
+          <AddExpenseRow
+              :newExpense="newExpense"
+              @saveRow="saveNewRow($event)"
+              @cancelSaveRow="cancelSaveRow()"></AddExpenseRow>
+        </div>
+      </q-dialog>
     </div>
   </template>
   
@@ -50,7 +50,7 @@
     },
     data() {
       return {
-        expenses: null,
+        expenses: [],
         isAddingExpense: false,
         newExpense: {
           comment: '',
@@ -148,8 +148,10 @@
     &__create-button
       border: 1px solid var(--q-primary)
       font-size: 2em
-      width: 2em
-      height: 2em
+      min-width: 2em
+      width: auto
+      height: auto
+      aspect-ratio: 1
       margin-block: 1em
       color: var(--q-primary)
       background-color: #fff

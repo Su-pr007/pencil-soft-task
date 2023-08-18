@@ -69,9 +69,12 @@ services:
       - MYSQL_USER=${MYSQL_USER}
       - MYSQL_PASSWORD=${MYSQL_PASSWORD}
       - TZ=Europe/Moscow
+    ports:
+      - '${DB_PORT}:3306'
     volumes:
       - ./database/data:/var/lib/mysql
       - ./database/init.sql:/data/application/init.sql
+      - ./database/task:/task
     restart: always
     command: --init-file /data/application/init.sql
 
